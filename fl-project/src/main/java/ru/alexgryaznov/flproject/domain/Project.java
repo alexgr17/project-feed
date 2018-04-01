@@ -26,6 +26,9 @@ public class Project {
     @OneToMany(mappedBy = "project")
     private List<Category> categories;
 
+    @ManyToOne
+    private RssFeed rssFeed;
+
     private Date pubDate;
 
     private boolean wasRead;

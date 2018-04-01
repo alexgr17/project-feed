@@ -17,4 +17,6 @@ public class RssFeed {
     private String title;
 
     private String url;
+
+    private String type;
 }

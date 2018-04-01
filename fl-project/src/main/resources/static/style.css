@@ -1,0 +1,40 @@
+body {
+    padding-top: 3.5rem;
+}
+
+.jumbotron {
+    padding: 2rem;
+}
+
+.opacity {
+    opacity: 0.5;
+}
+
+.projects {
+    margin-bottom: 2rem;
+}
+
+.project {
+    padding-top: 1rem;
+    border-bottom: 1px #212529 solid;
+}
+
+.project-title {
+    font-weight: bold;
+}
+
+.project-date {
+    color: gray;
+    font-size: 12px;
+    font-style: italic;
+    text-align: right;
+}
+
+.stop-word {
+    color: red;
+}
+
+.stop-word-matches {
+    font-size: 12px;
+    font-style: italic;
+}
