@@ -5,12 +5,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.alexgryaznov.flproject.dao.ProjectRepository;
 import ru.alexgryaznov.flproject.dao.RssFeedRepository;
-import ru.alexgryaznov.flproject.domain.Project;
-import ru.alexgryaznov.flproject.domain.RssFeed;
-import ru.alexgryaznov.flproject.domain.RssFeedType;
-import ru.alexgryaznov.flproject.domain.StopWord;
+import ru.alexgryaznov.flproject.domain.*;
+import ru.alexgryaznov.flproject.web.KeyWordHighlightEngine;
+import ru.alexgryaznov.flproject.web.StopWordHighlightEngine;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.StreamSupport;
 
 @Component
@@ -18,11 +18,14 @@ public class ProjectService {
 
     private static final int STOP_WORD_MATCH_LENGTH = 50;
 
-    @Autowired
-    private ProjectRepository projectRepository;
+    private final ProjectRepository projectRepository;
+    private final RssFeedRepository rssFeedRepository;
 
     @Autowired
-    private RssFeedRepository rssFeedRepository;
+    public ProjectService(ProjectRepository projectRepository, RssFeedRepository rssFeedRepository) {
+        this.projectRepository = projectRepository;
+        this.rssFeedRepository = rssFeedRepository;
+    }
 
     public void updateProjectWasRead(Date endDate) {
         for (Project project : projectRepository.findByWasReadFalseAndPubDateLessThanEqual(endDate)) {
@@ -31,13 +34,21 @@ public class ProjectService {
         }
     }
 
-    public Iterable<Project> getFLProjects(Set<StopWord> stopWords, HighlightEngine highlightEngine) {
-
+    public Iterable<Project> getFLProjects(
+            Iterable<KeyWord> keyWords,
+            Iterable<StopWord> stopWords,
+            KeyWordHighlightEngine keyWordHighlightEngine,
+            StopWordHighlightEngine stopWordHighlightEngine
+    ) {
         final Collection<RssFeed> rssFeeds = rssFeedRepository.findByType(RssFeedType.FL.name());
         final Iterable<Project> projects = projectRepository.findByWasReadFalseAndRssFeedInOrderByPubDateDesc(rssFeeds);
 
-        processStopWordsInProjectTitle(projects, stopWords, highlightEngine);
-        processStopWordsInProjectContent(projects, stopWords, highlightEngine);
+        processWordsInProjectTitle(projects, keyWords, keyWordHighlightEngine, project -> project.setHasKeyWordInTitle(true));
+        processWordsInProjectTitle(projects, stopWords, stopWordHighlightEngine, project -> project.setHasStopWordInTitle(true));
+
+        processWordsInProjectContent(projects, keyWords, keyWordHighlightEngine, Project::setKeyWordMatchesInContent);
+        processWordsInProjectContent(projects, stopWords, stopWordHighlightEngine, Project::setStopWordMatchesInContent);
+
         return projects;
     }
 
@@ -54,47 +65,62 @@ public class ProjectService {
                 .orElse(0L);
     }
 
-    private void processStopWordsInProjectTitle(Iterable<Project> projects, Set<StopWord> stopWords, HighlightEngine highlightEngine) {
-        projects.forEach(project -> stopWords.forEach(stopWord -> {
-            if (project.getTitle().toLowerCase().contains(stopWord.getTitle())) {
-                project.setHasStopWordInTitle(true);
-                project.setTitle(highlightEngine.highlightStopWord(project.getTitle(), stopWord));
-            }
-        }));
+    private <T extends Word> void processWordsInProjectTitle(
+            Iterable<Project> projects,
+            Iterable<T> words,
+            HighlightEngine highlightEngine,
+            Consumer<Project> projectConsumer
+    ) {
+        projects.forEach(project -> StreamSupport.stream(words.spliterator(), false)
+                .filter(word -> project.getTitle().toLowerCase().contains(word.getTitle()))
+                .forEach(word -> {
+                    projectConsumer.accept(project);
+                    project.setTitle(highlightEngine.highlightWord(project.getTitle(), word));
+                }));
     }
 
-    private void processStopWordsInProjectContent(Iterable<Project> projects, Set<StopWord> stopWords, HighlightEngine highlightEngine) {
+    private <T extends Word> void processWordsInProjectContent(
+            Iterable<Project> projects,
+            Iterable<T> words,
+            HighlightEngine highlightEngine,
+            Callback callback
+    ) {
         projects.forEach(project -> {
 
-            final List<String> stopWordMatches = new ArrayList<>();
-            stopWords.forEach(stopWord -> {
+            final List<String> wordMatches = new ArrayList<>();
+            words.forEach(word -> {
 
                 final String contentHtml = project.getContent();
-                if (contentHtml != null && contentHtml.toLowerCase().contains(stopWord.getTitle())) {
+                if (contentHtml != null && contentHtml.toLowerCase().contains(word.getTitle())) {
 
                     final String contentText = Jsoup.parse(contentHtml).text();
                     final String contentTextLowerCase = contentText.toLowerCase();
 
                     int indexOf = 0;
                     while (indexOf != -1) {
-                        indexOf = contentTextLowerCase.indexOf(stopWord.getTitle(), indexOf + 1);
+                        indexOf = contentTextLowerCase.indexOf(word.getTitle(), indexOf + 1);
                         if (indexOf != -1) {
 
                             final int beginIndex = Math.max(0, indexOf - STOP_WORD_MATCH_LENGTH);
                             final int endIndex = Math.min(contentText.length(), indexOf + STOP_WORD_MATCH_LENGTH);
 
-                            final String stopWordMatch = contentText.substring(beginIndex, endIndex);
-                            stopWordMatches.add(highlightEngine.highlightStopWord(stopWordMatch, stopWord));
+                            final String wordMatch = contentText.substring(beginIndex, endIndex);
+                            wordMatches.add(highlightEngine.highlightWord(wordMatch, word));
                         }
                     }
                 }
             });
-            project.setStopWordMatchesInContent(stopWordMatches);
+            callback.accept(project, wordMatches);
         });
+    }
+
+    private interface Callback {
+
+        void accept(Project project, List<String> wordMatches);
     }
 
     public interface HighlightEngine {
 
-        String highlightStopWord(String string, StopWord stopWord);
+        String highlightWord(String string, Word word);
     }
 }

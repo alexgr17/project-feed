@@ -34,8 +34,22 @@ public class Project {
     private boolean wasRead;
 
     @Transient
+    private boolean hasKeyWordInTitle;
+
+    @Transient
     private boolean hasStopWordInTitle;
 
     @Transient
+    private List<String> keyWordMatchesInContent;
+
+    @Transient
     private List<String> stopWordMatchesInContent;
+
+    public boolean isHasKeyWord() {
+        return hasKeyWordInTitle || !keyWordMatchesInContent.isEmpty();
+    }
+
+    public boolean isFiltered() {
+        return hasStopWordInTitle && !isHasKeyWord();
+    }
 }

@@ -38,22 +38,25 @@ public class ScheduledTaskService {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
-    @Autowired
-    private RssFeedRepository rssFeedRepository;
+    private final RssFeedRepository rssFeedRepository;
+    private final ProjectRepository projectRepository;
+    private final CategoryRepository categoryRepository;
+    private final RssParserService rssParserService;
+    private final RestTemplate restTemplate;
 
     @Autowired
-    private ProjectRepository projectRepository;
-
-    @Autowired
-    private CategoryRepository categoryRepository;
-
-    @Autowired
-    private RssParserService rssParserService;
-
-    private RestTemplate restTemplate;
-
-    public ScheduledTaskService(RestTemplateBuilder restTemplateBuilder) {
-        restTemplate = restTemplateBuilder.build();
+    public ScheduledTaskService(
+            RssFeedRepository rssFeedRepository,
+            ProjectRepository projectRepository,
+            CategoryRepository categoryRepository,
+            RssParserService rssParserService,
+            RestTemplateBuilder restTemplateBuilder
+    ) {
+        this.rssFeedRepository = rssFeedRepository;
+        this.projectRepository = projectRepository;
+        this.categoryRepository = categoryRepository;
+        this.rssParserService = rssParserService;
+        this.restTemplate = restTemplateBuilder.build();
     }
 
     @Scheduled(fixedRate = 300_000)
@@ -71,7 +74,7 @@ public class ScheduledTaskService {
                     .forEach(project -> {
                         project.setRssFeed(rssFeed);
                         projectRepository.save(project);
-                        project.getCategories().forEach(category -> categoryRepository.save(category));
+                        project.getCategories().forEach(categoryRepository::save);
                         newProjectsCount.incrementAndGet();
                     });
 

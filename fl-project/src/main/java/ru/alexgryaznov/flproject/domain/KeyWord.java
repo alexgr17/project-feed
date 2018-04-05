@@ -4,14 +4,14 @@ import javax.persistence.Entity;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "keyword") //TODO rename table and remove table annotation
-public class StopWord extends Word {
+@Table(name = "keyword_") //TODO rename table and remove table annotation
+public class KeyWord extends Word {
 
-    public StopWord() {
+    public KeyWord() {
         // empty
     }
 
-    public StopWord(String title) {
+    public KeyWord(String title) {
         super(title);
     }
 }

@@ -38,6 +38,14 @@
                     </#list>
                 </p>
             </#if>
+            <#if keyWords??>
+                <p>
+                    <strong>Key words:</strong>
+                    <#list keyWords as keyWord>
+                        ${keyWord};
+                    </#list>
+                </p>
+            </#if>
             <#if stopWords??>
                 <p>
                     <strong>Stop words:</strong>
@@ -56,7 +64,7 @@
         <#if projects?has_content>
             <div class="projects">
                 <#list projects as project>
-                    <#if !project.hasStopWordInTitle>
+                    <#if !project.filtered>
                         <div <#if project.stopWordMatchesInContent?has_content>class="opacity"</#if>>
                             <#include "project_row.ftl">
                         </div>
@@ -66,7 +74,7 @@
             <h2>Filtered projects</h2>
             <div class="projects opacity">
                 <#list projects as project>
-                    <#if project.hasStopWordInTitle>
+                    <#if project.filtered>
                         <#include "project_row.ftl">
                     </#if>
                 </#list>
