@@ -46,7 +46,7 @@ public class Project {
     private List<String> stopWordMatchesInContent;
 
     public boolean isHasKeyWord() {
-        return hasKeyWordInTitle || !keyWordMatchesInContent.isEmpty();
+        return hasKeyWordInTitle || (keyWordMatchesInContent != null && !keyWordMatchesInContent.isEmpty());
     }
 
     public boolean isFiltered() {
