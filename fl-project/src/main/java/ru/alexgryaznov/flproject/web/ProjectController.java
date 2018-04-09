@@ -9,6 +9,7 @@ import ru.alexgryaznov.flproject.dao.KeyWordRepository;
 import ru.alexgryaznov.flproject.dao.RssFeedRepository;
 import ru.alexgryaznov.flproject.domain.KeyWord;
 import ru.alexgryaznov.flproject.domain.Project;
+import ru.alexgryaznov.flproject.domain.RssFeedType;
 import ru.alexgryaznov.flproject.domain.StopWord;
 import ru.alexgryaznov.flproject.service.ProjectService;
 import ru.alexgryaznov.flproject.service.StopWordService;
@@ -18,7 +19,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-//TODO add logic for telegram / java
 @Controller
 public class ProjectController {
 
@@ -51,10 +51,10 @@ public class ProjectController {
 
         final Set<StopWord> stopWords = stopWordService.getStopWords();
         final Iterable<KeyWord> keyWords = keyWordRepository.findAll();
-        final Iterable<Project> projects = projectService.getFLProjects(keyWords, stopWords, keyWordHighlightEngine, stopWordHighlightEngine);
+        final Iterable<Project> projects = projectService.getFLProjects(keyWordHighlightEngine, stopWordHighlightEngine);
 
         model.addAttribute("title", "Fl.ru feed");
-        model.addAttribute("rssFeeds", rssFeedRepository.findAll());
+        model.addAttribute("rssFeeds", rssFeedRepository.findByType(RssFeedType.FL.name()));
 
         model.addAttribute("keyWords", StreamSupport.stream(keyWords.spliterator(), false)
                 .map(KeyWord::getTitle)

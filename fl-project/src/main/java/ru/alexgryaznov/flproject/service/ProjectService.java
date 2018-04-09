@@ -3,11 +3,10 @@ package ru.alexgryaznov.flproject.service;
 import org.jsoup.Jsoup;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import ru.alexgryaznov.flproject.dao.KeyWordRepository;
 import ru.alexgryaznov.flproject.dao.ProjectRepository;
 import ru.alexgryaznov.flproject.dao.RssFeedRepository;
 import ru.alexgryaznov.flproject.domain.*;
-import ru.alexgryaznov.flproject.web.KeyWordHighlightEngine;
-import ru.alexgryaznov.flproject.web.StopWordHighlightEngine;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -20,11 +19,20 @@ public class ProjectService {
 
     private final ProjectRepository projectRepository;
     private final RssFeedRepository rssFeedRepository;
+    private final KeyWordRepository keyWordRepository;
+    private final StopWordService stopWordService;
 
     @Autowired
-    public ProjectService(ProjectRepository projectRepository, RssFeedRepository rssFeedRepository) {
+    public ProjectService(
+            ProjectRepository projectRepository,
+            RssFeedRepository rssFeedRepository,
+            KeyWordRepository keyWordRepository,
+            StopWordService stopWordService
+    ) {
         this.projectRepository = projectRepository;
         this.rssFeedRepository = rssFeedRepository;
+        this.keyWordRepository = keyWordRepository;
+        this.stopWordService = stopWordService;
     }
 
     public void updateProjectWasRead(Date endDate) {
@@ -35,19 +43,14 @@ public class ProjectService {
     }
 
     public Iterable<Project> getFLProjects(
-            Iterable<KeyWord> keyWords,
-            Iterable<StopWord> stopWords,
-            KeyWordHighlightEngine keyWordHighlightEngine,
-            StopWordHighlightEngine stopWordHighlightEngine
+            HighlightEngine keyWordHighlightEngine,
+            HighlightEngine stopWordHighlightEngine
     ) {
         final Collection<RssFeed> rssFeeds = rssFeedRepository.findByType(RssFeedType.FL.name());
         final Iterable<Project> projects = projectRepository.findByWasReadFalseAndRssFeedInOrderByPubDateDesc(rssFeeds);
 
-        processWordsInProjectTitle(projects, keyWords, keyWordHighlightEngine, project -> project.setHasKeyWordInTitle(true));
-        processWordsInProjectTitle(projects, stopWords, stopWordHighlightEngine, project -> project.setHasStopWordInTitle(true));
-
-        processWordsInProjectContent(projects, keyWords, keyWordHighlightEngine, Project::setKeyWordMatchesInContent);
-        processWordsInProjectContent(projects, stopWords, stopWordHighlightEngine, Project::setStopWordMatchesInContent);
+        processWordsInProjectTitle(keyWordHighlightEngine, stopWordHighlightEngine, projects);
+        processWordsInProjectContent(keyWordHighlightEngine, stopWordHighlightEngine, projects);
 
         return projects;
     }
@@ -55,6 +58,30 @@ public class ProjectService {
     public Iterable<Project> getUpworkProjects() {
         final Collection<RssFeed> rssFeeds = rssFeedRepository.findByType(RssFeedType.UPWORK.name());
         return projectRepository.findByWasReadFalseAndRssFeedInOrderByPubDateDesc(rssFeeds);
+    }
+
+    public void processWordsInProjectTitle(
+            HighlightEngine keyWordHighlightEngine,
+            HighlightEngine stopWordHighlightEngine,
+            Iterable<Project> projects
+    ) {
+        final Set<StopWord> stopWords = stopWordService.getStopWords();
+        final Iterable<KeyWord> keyWords = keyWordRepository.findAll();
+
+        processWordsInProjectTitle(projects, keyWords, keyWordHighlightEngine, project -> project.setHasKeyWordInTitle(true));
+        processWordsInProjectTitle(projects, stopWords, stopWordHighlightEngine, project -> project.setHasStopWordInTitle(true));
+    }
+
+    public void processWordsInProjectContent(
+            HighlightEngine keyWordHighlightEngine,
+            HighlightEngine stopWordHighlightEngine,
+            Iterable<Project> projects
+    ) {
+        final Set<StopWord> stopWords = stopWordService.getStopWords();
+        final Iterable<KeyWord> keyWords = keyWordRepository.findAll();
+
+        processWordsInProjectContent(projects, keyWords, keyWordHighlightEngine, Project::setKeyWordMatchesInContent);
+        processWordsInProjectContent(projects, stopWords, stopWordHighlightEngine, Project::setStopWordMatchesInContent);
     }
 
     public Long getLastProjectPubDate(Iterable<Project> projects) {

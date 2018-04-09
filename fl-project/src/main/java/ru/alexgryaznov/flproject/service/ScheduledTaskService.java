@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -17,13 +18,16 @@ import ru.alexgryaznov.flproject.domain.Project;
 import ru.alexgryaznov.flproject.domain.RssFeed;
 import ru.alexgryaznov.flproject.domain.RssFeedType;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
+@Profile("prod")
 @Component
 public class ScheduledTaskService {
 
@@ -42,6 +46,8 @@ public class ScheduledTaskService {
     private final ProjectRepository projectRepository;
     private final CategoryRepository categoryRepository;
     private final RssParserService rssParserService;
+    private final ProjectService projectService;
+    private final TelegramService telegramService;
     private final RestTemplate restTemplate;
 
     @Autowired
@@ -50,17 +56,21 @@ public class ScheduledTaskService {
             ProjectRepository projectRepository,
             CategoryRepository categoryRepository,
             RssParserService rssParserService,
+            ProjectService projectService,
+            TelegramService telegramService,
             RestTemplateBuilder restTemplateBuilder
     ) {
         this.rssFeedRepository = rssFeedRepository;
         this.projectRepository = projectRepository;
         this.categoryRepository = categoryRepository;
         this.rssParserService = rssParserService;
+        this.projectService = projectService;
+        this.telegramService = telegramService;
         this.restTemplate = restTemplateBuilder.build();
     }
 
     @Scheduled(fixedRate = 300_000)
-    private void loadProjects() {
+    public void loadProjects() {
 
         for (RssFeed rssFeed : rssFeedRepository.findAll()) {
 
@@ -69,24 +79,32 @@ public class ScheduledTaskService {
             final AtomicInteger newProjectsCount = new AtomicInteger();
             final List<Project> projects = rssParserService.loadProjects(rssFeed.getUrl());
 
-            projects.stream()
+            final List<Project> loadedProjects = projects.stream()
                     .filter(project -> !projectRepository.findById(project.getGuid()).isPresent())
-                    .forEach(project -> {
+                    .peek(project -> {
                         project.setRssFeed(rssFeed);
                         projectRepository.save(project);
                         project.getCategories().forEach(categoryRepository::save);
                         newProjectsCount.incrementAndGet();
-                    });
+                    })
+                    .collect(Collectors.toList());
+
+            final List<Project> loadedFlProjects = loadedProjects.stream()
+                    .filter(project -> RssFeedType.FL.name().equals(project.getRssFeed().getType()))
+                    .collect(Collectors.toList());
+
+            projectService.processWordsInProjectTitle((string, word) -> string, (string, word) -> string, loadedFlProjects);
+            sendNotifications(loadedFlProjects);
 
             log.info("Projects successfully loaded - total: {}, new: {}", projects.size(), newProjectsCount.get());
         }
     }
 
     @Scheduled(fixedRate = 300_000)
-    private void loadContentForFLProjects() throws InterruptedException {
+    public void loadContentForFLProjects() throws InterruptedException {
 
         final Collection<RssFeed> rssFeeds = rssFeedRepository.findByType(RssFeedType.FL.name());
-        final Collection<Project> projects = projectRepository.findByContentIsNullAndRssFeedIn(rssFeeds);
+        final List<Project> projects = new ArrayList<>(projectRepository.findByContentIsNullAndRssFeedIn(rssFeeds));
 
         for (Project project : projects) {
 
@@ -107,7 +125,16 @@ public class ScheduledTaskService {
             Thread.sleep(LOAD_CONTENT_INTERVAL, RANDOM.nextInt(LOAD_CONTENT_INTERVAL));
         }
 
+        projectService.processWordsInProjectContent((string, word) -> string, (string, word) -> string, projects);
+        sendNotifications(projects);
+
         log.info("Content successfully loaded - total: {}", projects.size());
+    }
+
+    private void sendNotifications(List<Project> loadedFlProjects) {
+        loadedFlProjects.stream()
+                .filter(Project::isHasKeyWord)
+                .forEach(telegramService::sendNotification);
     }
 
     private String getHtml(Document doc, String query) {
