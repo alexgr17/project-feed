@@ -16,6 +16,7 @@ import ru.alexgryaznov.fltelegram.model.Project;
 public class TelegramService extends TelegramLongPollingBot {
 
     private static final String BOT_USERNAME = "FreelanceNotificationsBot";
+    //TODO move token to configuration
     private static final String BOT_TOKEN = "552373266:AAFR567O55SZs8pco7mk6i6us_YLJasO7IA";
 
     private static final String LINE_BREAK = System.lineSeparator();
