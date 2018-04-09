@@ -6,7 +6,6 @@ import org.jsoup.nodes.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -58,7 +57,7 @@ public class ScheduledTaskService {
             RssParserService rssParserService,
             ProjectService projectService,
             TelegramService telegramService,
-            RestTemplateBuilder restTemplateBuilder
+            RestTemplate restTemplate
     ) {
         this.rssFeedRepository = rssFeedRepository;
         this.projectRepository = projectRepository;
@@ -66,7 +65,7 @@ public class ScheduledTaskService {
         this.rssParserService = rssParserService;
         this.projectService = projectService;
         this.telegramService = telegramService;
-        this.restTemplate = restTemplateBuilder.build();
+        this.restTemplate = restTemplate;
     }
 
     @Scheduled(fixedRate = 300_000)

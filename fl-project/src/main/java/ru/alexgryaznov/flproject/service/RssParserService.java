@@ -2,7 +2,7 @@ package ru.alexgryaznov.flproject.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.w3c.dom.Document;
@@ -42,8 +42,9 @@ public class RssParserService {
 
     private RestTemplate restTemplate;
 
-    public RssParserService(RestTemplateBuilder restTemplateBuilder) {
-        restTemplate = restTemplateBuilder.build();
+    @Autowired
+    public RssParserService(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
     }
 
     public List<Project> loadProjects(String urlString) {

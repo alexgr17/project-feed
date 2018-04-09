@@ -2,7 +2,6 @@ package ru.alexgryaznov.flproject.service;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.web.client.RestTemplate;
 import ru.alexgryaznov.flproject.domain.Project;
 
@@ -16,18 +15,13 @@ public class TelegramServiceTest {
 
     @Before
     public void setUp() {
-
         restTemplate = mock(RestTemplate.class);
-
-        final RestTemplateBuilder restTemplateBuilder = mock(RestTemplateBuilder.class);
-        when(restTemplateBuilder.build()).thenReturn(restTemplate);
-
-        telegramService = new TelegramService(restTemplateBuilder);
+        telegramService = new TelegramService(restTemplate);
     }
 
     @Test
     public void testSendNotification() {
         telegramService.sendNotification(new Project());
-        verify(restTemplate, times(1)).postForObject(eq(TelegramService.URL), any(), any());
+        verify(restTemplate, times(1)).postForObject(eq("http://localhost:8082/send"), any(), any());
     }
 }

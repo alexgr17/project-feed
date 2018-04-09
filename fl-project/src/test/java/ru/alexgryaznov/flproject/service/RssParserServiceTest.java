@@ -2,7 +2,6 @@ package ru.alexgryaznov.flproject.service;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.web.client.RestTemplate;
 import ru.alexgryaznov.flproject.domain.Category;
 import ru.alexgryaznov.flproject.domain.Project;
@@ -29,13 +28,8 @@ public class RssParserServiceTest {
 
     @Before
     public void setUp() {
-
         restTemplate = mock(RestTemplate.class);
-
-        final RestTemplateBuilder restTemplateBuilder = mock(RestTemplateBuilder.class);
-        when(restTemplateBuilder.build()).thenReturn(restTemplate);
-
-        rssParserService = new RssParserService(restTemplateBuilder);
+        rssParserService = new RssParserService(restTemplate);
     }
 
     @Test

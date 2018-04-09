@@ -2,7 +2,6 @@ package ru.alexgryaznov.flproject.service;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.web.client.RestTemplate;
 import ru.alexgryaznov.flproject.dao.CategoryRepository;
 import ru.alexgryaznov.flproject.dao.ProjectRepository;
@@ -48,13 +47,8 @@ public class ScheduledTaskServiceTest {
         projectService = mock(ProjectService.class);
         telegramService = mock(TelegramService.class);
         restTemplate = mock(RestTemplate.class);
-
-        //TODO create bean RestTemplate and inject it everywhere and avoid of using this duplication
-        final RestTemplateBuilder restTemplateBuilder = mock(RestTemplateBuilder.class);
-        when(restTemplateBuilder.build()).thenReturn(restTemplate);
-
         scheduledTaskService = new ScheduledTaskService(rssFeedRepository, projectRepository, categoryRepository,
-                rssParserService, projectService, telegramService, restTemplateBuilder);
+                rssParserService, projectService, telegramService, restTemplate);
     }
 
     @Test
