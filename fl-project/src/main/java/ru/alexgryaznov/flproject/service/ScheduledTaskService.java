@@ -94,7 +94,7 @@ public class ScheduledTaskService {
 
                 log.info("Projects successfully loaded - total: {}, new: {}", projects.size(), newProjectsCount.get());
             } catch (Exception e) {
-                log.error("Error while loading projects for rss feed: {}", rssFeed.getTitle());
+                log.error("Error while loading projects for rss feed: {}", rssFeed.getTitle(), e);
             }
         }
     }
@@ -125,7 +125,7 @@ public class ScheduledTaskService {
                 log.info("Content successfully loaded");
                 Thread.sleep(LOAD_CONTENT_INTERVAL, RANDOM.nextInt(LOAD_CONTENT_INTERVAL));
             } catch (Exception e) {
-                log.error("Error while loading content for project: {}", project.getGuid());
+                log.error("Error while loading content for project: {}", project.getGuid(), e);
             }
         }
 
