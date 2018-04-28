@@ -71,14 +71,6 @@
                     </#if>
                 </#list>
             </div>
-            <h2>Filtered projects</h2>
-            <div class="projects opacity">
-                <#list projects as project>
-                    <#if project.filtered>
-                        <#include "project_row.ftl">
-                    </#if>
-                </#list>
-            </div>
         <#else>
             <p>All projects are already read</p>
         </#if>
