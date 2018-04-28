@@ -31,6 +31,8 @@ public class Project {
 
     private Date pubDate;
 
+    private boolean wasRead;
+
     @Transient
     private boolean hasKeyWordInTitle;
 

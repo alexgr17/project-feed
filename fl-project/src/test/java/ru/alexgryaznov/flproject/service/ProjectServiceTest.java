@@ -37,11 +37,12 @@ public class ProjectServiceTest {
 
         final Date date = new Date();
         final Project project = new Project();
-        when(projectRepository.findByPubDateLessThanEqual(date)).thenReturn(Collections.singletonList(project));
+        when(projectRepository.findByWasReadFalseAndPubDateLessThanEqual(date)).thenReturn(Collections.singletonList(project));
 
-        projectService.deleteProjectWasRead(date);
+        projectService.updateProjectWasRead(date);
 
-        verify(projectRepository, times(1)).delete(project);
+        assertTrue(project.isWasRead());
+        verify(projectRepository, times(1)).save(project);
     }
 
     @Test
@@ -119,7 +120,7 @@ public class ProjectServiceTest {
     public void testGetUpworkProjects() {
 
         final Project project = new Project();
-        when(projectRepository.findByRssFeedInOrderByPubDateDesc(any())).thenReturn(Collections.singletonList(project));
+        when(projectRepository.findByWasReadFalseAndRssFeedInOrderByPubDateDesc(any())).thenReturn(Collections.singletonList(project));
 
         final Iterable<Project> projects = projectService.getUpworkProjects();
 
@@ -149,7 +150,7 @@ public class ProjectServiceTest {
     }
 
     private void configureMocks(Project project) {
-        when(projectRepository.findByRssFeedInOrderByPubDateDesc(any())).thenReturn(Collections.singletonList(project));
+        when(projectRepository.findByWasReadFalseAndRssFeedInOrderByPubDateDesc(any())).thenReturn(Collections.singletonList(project));
         when(keyWordRepository.findAll()).thenReturn(Collections.singletonList(getKeyWord()));
         when(stopWordService.getStopWords()).thenReturn(Collections.singleton(getStopWord()));
     }

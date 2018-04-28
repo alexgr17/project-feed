@@ -3,7 +3,6 @@ package ru.alexgryaznov.flproject.service;
 import org.jsoup.Jsoup;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import ru.alexgryaznov.flproject.dao.KeyWordRepository;
 import ru.alexgryaznov.flproject.dao.ProjectRepository;
 import ru.alexgryaznov.flproject.dao.RssFeedRepository;
@@ -36,10 +35,12 @@ public class ProjectService {
         this.stopWordService = stopWordService;
     }
 
-    @Transactional
-    public void deleteProjectWasRead(Date endDate) {
-        for (Project project : projectRepository.findByPubDateLessThanEqual(endDate)) {
-            projectRepository.delete(project);
+    public void updateProjectWasRead(Date endDate) {
+        for (Project project : projectRepository.findByWasReadFalseAndPubDateLessThanEqual(endDate)) {
+            project.setWasRead(true);
+            project.setDescription(null);
+            project.setContent(null);
+            projectRepository.save(project);
         }
     }
 
@@ -48,7 +49,7 @@ public class ProjectService {
             HighlightEngine stopWordHighlightEngine
     ) {
         final Collection<RssFeed> rssFeeds = rssFeedRepository.findByType(RssFeedType.FL.name());
-        final Iterable<Project> projects = projectRepository.findByRssFeedInOrderByPubDateDesc(rssFeeds);
+        final Iterable<Project> projects = projectRepository.findByWasReadFalseAndRssFeedInOrderByPubDateDesc(rssFeeds);
 
         processWordsInProjectTitle(keyWordHighlightEngine, stopWordHighlightEngine, projects);
         processWordsInProjectContent(keyWordHighlightEngine, stopWordHighlightEngine, projects);
@@ -58,7 +59,7 @@ public class ProjectService {
 
     public Iterable<Project> getUpworkProjects() {
         final Collection<RssFeed> rssFeeds = rssFeedRepository.findByType(RssFeedType.UPWORK.name());
-        return projectRepository.findByRssFeedInOrderByPubDateDesc(rssFeeds);
+        return projectRepository.findByWasReadFalseAndRssFeedInOrderByPubDateDesc(rssFeeds);
     }
 
     public void processWordsInProjectTitle(

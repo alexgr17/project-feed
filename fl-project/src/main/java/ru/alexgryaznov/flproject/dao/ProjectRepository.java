@@ -13,7 +13,7 @@ public interface ProjectRepository extends CrudRepository<Project, String> {
 
     Collection<Project> findByContentIsNullAndRssFeedIn(Collection<RssFeed> rssFeeds);
 
-    Collection<Project> findByPubDateLessThanEqual(Date endDate);
+    Collection<Project> findByWasReadFalseAndPubDateLessThanEqual(Date endDate);
 
-    Collection<Project> findByRssFeedInOrderByPubDateDesc(Collection<RssFeed> rssFeeds);
+    Collection<Project> findByWasReadFalseAndRssFeedInOrderByPubDateDesc(Collection<RssFeed> rssFeeds);
 }

@@ -85,7 +85,7 @@ public class ProjectController {
     @GetMapping("/mark-all-projects-as-read")
     public String markProjectsAsRead(@RequestParam(defaultValue = "0") long lastProjectPubDate) {
         if (lastProjectPubDate > 0) {
-            projectService.deleteProjectWasRead(new Date(lastProjectPubDate));
+            projectService.updateProjectWasRead(new Date(lastProjectPubDate));
         }
         return "redirect:/";
     }
