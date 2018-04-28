@@ -42,7 +42,7 @@ public class FlClientApplication {
 
 	@LoadBalanced
 	@Bean
-	public RestTemplate restTemplate(RestTemplateBuilder restTemplateBuilder) {
+	public RestTemplate internalRestTemplate(RestTemplateBuilder restTemplateBuilder) {
 		return restTemplateBuilder.build();
 	}
 }
