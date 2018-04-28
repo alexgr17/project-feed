@@ -3,6 +3,7 @@ package ru.alexgryaznov.flproject.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.w3c.dom.Document;
@@ -40,16 +41,16 @@ public class RssParserService {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
-    private RestTemplate restTemplate;
+    private RestTemplate externalRestTemplate;
 
     @Autowired
-    public RssParserService(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
+    public RssParserService(RestTemplateBuilder restTemplateBuilder) {
+        this.externalRestTemplate = restTemplateBuilder.build();
     }
 
     public List<Project> loadProjects(String urlString) {
 
-        final String rss = restTemplate.getForObject(urlString, String.class);
+        final String rss = externalRestTemplate.getForObject(urlString, String.class);
         final InputStream inputStream = new ByteArrayInputStream(rss.getBytes());
 
         final Document document;

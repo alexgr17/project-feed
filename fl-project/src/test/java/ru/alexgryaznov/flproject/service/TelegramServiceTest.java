@@ -22,6 +22,6 @@ public class TelegramServiceTest {
     @Test
     public void testSendNotification() {
         telegramService.sendNotification(new Project());
-        verify(restTemplate, times(1)).postForObject(eq("http://localhost:8082/send"), any(), any());
+        verify(restTemplate, times(1)).postForObject(eq("http://localhost:8082/send-project"), any(), any());
     }
 }

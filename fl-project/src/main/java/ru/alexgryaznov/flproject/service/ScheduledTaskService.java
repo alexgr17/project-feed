@@ -6,9 +6,11 @@ import org.jsoup.nodes.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import ru.alexgryaznov.flproject.dao.CategoryRepository;
 import ru.alexgryaznov.flproject.dao.ProjectRepository;
@@ -47,7 +49,7 @@ public class ScheduledTaskService {
     private final RssParserService rssParserService;
     private final ProjectService projectService;
     private final TelegramService telegramService;
-    private final RestTemplate restTemplate;
+    private final RestTemplate externalRestTemplate;
 
     @Autowired
     public ScheduledTaskService(
@@ -57,7 +59,7 @@ public class ScheduledTaskService {
             RssParserService rssParserService,
             ProjectService projectService,
             TelegramService telegramService,
-            RestTemplate restTemplate
+            RestTemplateBuilder restTemplateBuilder
     ) {
         this.rssFeedRepository = rssFeedRepository;
         this.projectRepository = projectRepository;
@@ -65,7 +67,7 @@ public class ScheduledTaskService {
         this.rssParserService = rssParserService;
         this.projectService = projectService;
         this.telegramService = telegramService;
-        this.restTemplate = restTemplate;
+        this.externalRestTemplate = restTemplateBuilder.build();
     }
 
     @Scheduled(fixedRate = 300_000)
@@ -100,6 +102,7 @@ public class ScheduledTaskService {
     }
 
     @Scheduled(fixedRate = 300_000)
+    @Transactional
     public void loadContentForFLProjects() throws InterruptedException {
 
         final Collection<RssFeed> rssFeeds = rssFeedRepository.findByType(RssFeedType.FL.name());
@@ -109,7 +112,7 @@ public class ScheduledTaskService {
 
             final String link = project.getLink();
 
-            final String html = restTemplate.getForObject(link, String.class);
+            final String html = externalRestTemplate.getForObject(link, String.class);
             final Document doc = Jsoup.parse(html);
 
             final Matcher matcher = FL_PROJECT_LINK_PATTERN.matcher(link);
@@ -119,7 +122,6 @@ public class ScheduledTaskService {
 
             final int projectId = Integer.parseInt(matcher.group(1));
             project.setContent(getHtml(doc, PROJECT_TAG_ID_PREFIX + projectId));
-            projectRepository.save(project);
 
             Thread.sleep(LOAD_CONTENT_INTERVAL, RANDOM.nextInt(LOAD_CONTENT_INTERVAL));
         }

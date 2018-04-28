@@ -8,14 +8,13 @@ import ru.alexgryaznov.flproject.domain.Project;
 @Component
 public class TelegramService {
 
-    private final RestTemplate restTemplate;
+    private final RestTemplate internalRestTemplate;
 
-    public TelegramService(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
+    public TelegramService(RestTemplate internalRestTemplate) {
+        this.internalRestTemplate = internalRestTemplate;
     }
 
     public void sendNotification(Project project) {
-        final HttpEntity<Project> requestEntity = new HttpEntity<>(project);
-        restTemplate.postForObject("http://FLTELEGRAM/send", requestEntity, String.class);
+        internalRestTemplate.postForObject("http://FLTELEGRAM/send-project", new HttpEntity<>(project), String.class);
     }
 }
