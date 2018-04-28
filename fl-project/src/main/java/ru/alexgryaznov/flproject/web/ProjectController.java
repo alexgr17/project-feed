@@ -13,6 +13,8 @@ import ru.alexgryaznov.flproject.domain.RssFeedType;
 import ru.alexgryaznov.flproject.domain.StopWord;
 import ru.alexgryaznov.flproject.service.ProjectService;
 import ru.alexgryaznov.flproject.service.StopWordService;
+import ru.alexgryaznov.flproject.web.util.KeyWordHighlightEngine;
+import ru.alexgryaznov.flproject.web.util.StopWordHighlightEngine;
 
 import java.util.Date;
 import java.util.Set;
@@ -72,6 +74,7 @@ public class ProjectController {
         return "index";
     }
 
+    //TODO this functionality is not working
     @GetMapping("/upwork")
     public String upwork(ModelMap model) {
         model.addAttribute("title", "Upwork feed");
@@ -82,7 +85,7 @@ public class ProjectController {
     @GetMapping("/mark-all-projects-as-read")
     public String markProjectsAsRead(@RequestParam(defaultValue = "0") long lastProjectPubDate) {
         if (lastProjectPubDate > 0) {
-            projectService.updateProjectWasRead(new Date(lastProjectPubDate));
+            projectService.deleteProjectWasRead(new Date(lastProjectPubDate));
         }
         return "redirect:/";
     }
