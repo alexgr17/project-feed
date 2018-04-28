@@ -24,7 +24,7 @@ public class Project {
     private String content;
 
     //TODO this field is unused - remove
-    @OneToMany(mappedBy = "project")
+    @OneToMany(mappedBy = "project", fetch = FetchType.EAGER)
     private List<Category> categories;
 
     @ManyToOne
