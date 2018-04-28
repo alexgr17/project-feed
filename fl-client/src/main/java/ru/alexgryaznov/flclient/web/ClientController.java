@@ -22,12 +22,12 @@ public class ClientController {
     }
 
     @RequestMapping(method = RequestMethod.POST)
-    public void createClient(@RequestBody Client client) {
+    public void saveClient(@RequestBody Client client) {
         clientRepository.save(client);
     }
 
     @RequestMapping(value = "{id}", method = RequestMethod.DELETE)
-    public void removeClient(@RequestParam int clientId) {
+    public void deleteClient(@RequestParam int clientId) {
         clientRepository.deleteById(clientId);
     }
 }
