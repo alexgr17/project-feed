@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import ru.alexgryaznov.flproject.dao.CategoryRepository;
 import ru.alexgryaznov.flproject.dao.ProjectRepository;
@@ -100,7 +99,6 @@ public class ScheduledTaskService {
     }
 
     @Scheduled(fixedRate = 300_000)
-    @Transactional
     public void loadContentForFLProjects() throws InterruptedException {
 
         final Collection<RssFeed> rssFeeds = rssFeedRepository.findByType(RssFeedType.FL.name());
@@ -120,6 +118,7 @@ public class ScheduledTaskService {
 
             final int projectId = Integer.parseInt(matcher.group(1));
             project.setContent(getHtml(doc, PROJECT_TAG_ID_PREFIX + projectId));
+            projectRepository.save(project);
 
             Thread.sleep(LOAD_CONTENT_INTERVAL, RANDOM.nextInt(LOAD_CONTENT_INTERVAL));
         }
