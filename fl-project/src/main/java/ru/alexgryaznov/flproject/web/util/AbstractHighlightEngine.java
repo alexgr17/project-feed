@@ -1,4 +1,4 @@
-package ru.alexgryaznov.flproject.web;
+package ru.alexgryaznov.flproject.web.util;
 
 import ru.alexgryaznov.flproject.domain.Word;
 import ru.alexgryaznov.flproject.service.ProjectService;
