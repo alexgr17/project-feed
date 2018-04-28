@@ -1,4 +1,4 @@
-package ru.alexgryaznov.flproject.web;
+package ru.alexgryaznov.flproject.web.util;
 
 import org.junit.Before;
 import org.junit.Test;

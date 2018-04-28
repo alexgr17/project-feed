@@ -1,6 +1,6 @@
 spring:
   application:
-    name: flservice
+    name: flproject
   cloud:
     config:
       uri: http://localhost:8888

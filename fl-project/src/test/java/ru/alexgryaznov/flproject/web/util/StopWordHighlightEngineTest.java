@@ -1,16 +1,16 @@
-package ru.alexgryaznov.flproject.web;
+package ru.alexgryaznov.flproject.web.util;
 
 import ru.alexgryaznov.flproject.service.ProjectService;
 
-public class KeyWordHighlightEngineTest extends AbstractHighlightEngineTest {
+public class StopWordHighlightEngineTest extends AbstractHighlightEngineTest {
 
     @Override
     protected ProjectService.HighlightEngine getHighlightEngine() {
-        return new KeyWordHighlightEngine();
+        return new StopWordHighlightEngine();
     }
 
     @Override
     protected String getCssClassName() {
-        return "key-word";
+        return "stop-word";
     }
 }
