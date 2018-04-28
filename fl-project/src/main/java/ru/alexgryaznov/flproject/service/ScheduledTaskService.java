@@ -69,58 +69,64 @@ public class ScheduledTaskService {
 
     @Scheduled(fixedRate = 300_000)
     public void loadProjects() {
-
         for (RssFeed rssFeed : rssFeedRepository.findAll()) {
-
             log.info("Loading projects for rss feed: {}", rssFeed.getTitle());
+            try {
+                final AtomicInteger newProjectsCount = new AtomicInteger();
+                final List<Project> projects = rssParserService.loadProjects(rssFeed.getUrl());
 
-            final AtomicInteger newProjectsCount = new AtomicInteger();
-            final List<Project> projects = rssParserService.loadProjects(rssFeed.getUrl());
+                final List<Project> loadedProjects = projects.stream()
+                        .filter(project -> !projectRepository.findById(project.getGuid()).isPresent())
+                        .peek(project -> {
+                            project.setRssFeed(rssFeed);
+                            projectRepository.save(project);
+                            project.getCategories().forEach(categoryRepository::save);
+                            newProjectsCount.incrementAndGet();
+                        })
+                        .collect(Collectors.toList());
 
-            final List<Project> loadedProjects = projects.stream()
-                    .filter(project -> !projectRepository.findById(project.getGuid()).isPresent())
-                    .peek(project -> {
-                        project.setRssFeed(rssFeed);
-                        projectRepository.save(project);
-                        project.getCategories().forEach(categoryRepository::save);
-                        newProjectsCount.incrementAndGet();
-                    })
-                    .collect(Collectors.toList());
+                final List<Project> loadedFlProjects = loadedProjects.stream()
+                        .filter(project -> RssFeedType.FL.name().equals(project.getRssFeed().getType()))
+                        .collect(Collectors.toList());
 
-            final List<Project> loadedFlProjects = loadedProjects.stream()
-                    .filter(project -> RssFeedType.FL.name().equals(project.getRssFeed().getType()))
-                    .collect(Collectors.toList());
+                projectService.processWordsInProjectTitle((string, word) -> string, (string, word) -> string, loadedFlProjects);
+                sendNotifications(loadedFlProjects);
 
-            projectService.processWordsInProjectTitle((string, word) -> string, (string, word) -> string, loadedFlProjects);
-            sendNotifications(loadedFlProjects);
-
-            log.info("Projects successfully loaded - total: {}, new: {}", projects.size(), newProjectsCount.get());
+                log.info("Projects successfully loaded - total: {}, new: {}", projects.size(), newProjectsCount.get());
+            } catch (Exception e) {
+                log.error("Error while loading projects for rss feed: {}", rssFeed.getTitle());
+            }
         }
     }
 
     @Scheduled(fixedRate = 300_000)
-    public void loadContentForFLProjects() throws InterruptedException {
+    public void loadContentForFLProjects() {
 
         final Collection<RssFeed> rssFeeds = rssFeedRepository.findByType(RssFeedType.FL.name());
         final List<Project> projects = new ArrayList<>(projectRepository.findByContentIsNullAndRssFeedIn(rssFeeds));
 
         for (Project project : projects) {
+            log.info("Loading content for project: {}", project.getGuid());
+            try {
+                final String link = project.getLink();
 
-            final String link = project.getLink();
+                final String html = externalRestTemplate.getForObject(link, String.class);
+                final Document doc = Jsoup.parse(html);
 
-            final String html = externalRestTemplate.getForObject(link, String.class);
-            final Document doc = Jsoup.parse(html);
+                final Matcher matcher = FL_PROJECT_LINK_PATTERN.matcher(link);
+                if (!matcher.find()) {
+                    throw new IllegalStateException("Invalid link format: " + link);
+                }
 
-            final Matcher matcher = FL_PROJECT_LINK_PATTERN.matcher(link);
-            if (!matcher.find()) {
-                throw new IllegalStateException("Invalid link format: " + link);
+                final int projectId = Integer.parseInt(matcher.group(1));
+                project.setContent(getHtml(doc, PROJECT_TAG_ID_PREFIX + projectId));
+                projectRepository.save(project);
+
+                log.info("Content successfully loaded");
+                Thread.sleep(LOAD_CONTENT_INTERVAL, RANDOM.nextInt(LOAD_CONTENT_INTERVAL));
+            } catch (Exception e) {
+                log.error("Error while loading content for project: {}", project.getGuid());
             }
-
-            final int projectId = Integer.parseInt(matcher.group(1));
-            project.setContent(getHtml(doc, PROJECT_TAG_ID_PREFIX + projectId));
-            projectRepository.save(project);
-
-            Thread.sleep(LOAD_CONTENT_INTERVAL, RANDOM.nextInt(LOAD_CONTENT_INTERVAL));
         }
 
         projectService.processWordsInProjectContent((string, word) -> string, (string, word) -> string, projects);

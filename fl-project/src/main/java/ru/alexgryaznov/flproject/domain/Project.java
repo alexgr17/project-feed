@@ -23,6 +23,7 @@ public class Project {
     @Column(length = 10_000)
     private String content;
 
+    //TODO this field is unused - remove
     @OneToMany(mappedBy = "project")
     private List<Category> categories;
 
@@ -31,6 +32,7 @@ public class Project {
 
     private Date pubDate;
 
+    //TODO remove read projects >1 week
     private boolean wasRead;
 
     @Transient
