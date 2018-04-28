@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: fltelegram
+  cloud:
+    config:
+      uri: http://localhost:8888

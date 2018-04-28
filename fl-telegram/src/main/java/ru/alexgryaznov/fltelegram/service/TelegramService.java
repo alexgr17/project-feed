@@ -8,6 +8,7 @@ import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.api.objects.Update;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import ru.alexgryaznov.fltelegram.TelegramProperties;
 import ru.alexgryaznov.fltelegram.dao.ChatRepository;
 import ru.alexgryaznov.fltelegram.model.Chat;
 import ru.alexgryaznov.fltelegram.model.Project;
@@ -15,24 +16,22 @@ import ru.alexgryaznov.fltelegram.model.Project;
 @Component
 public class TelegramService extends TelegramLongPollingBot {
 
-    private static final String BOT_USERNAME = "FreelanceNotificationsBot";
-    //TODO move token to configuration
-    private static final String BOT_TOKEN = "552373266:AAFR567O55SZs8pco7mk6i6us_YLJasO7IA";
-
     private static final String LINE_BREAK = System.lineSeparator();
 
     private static final String ALREADY_SUBSCRIBED_TEXT = "Already subscribed";
     private static final String SUCCESSFULLY_SUBSCRIBED_TEXT = "Successfully subscribed";
 
     private final ChatRepository chatRepository;
+    private final TelegramProperties telegramProperties;
 
     static {
         ApiContextInitializer.init();
     }
 
     @Autowired
-    public TelegramService(ChatRepository chatRepository) {
+    public TelegramService(ChatRepository chatRepository, TelegramProperties telegramProperties) {
         this.chatRepository = chatRepository;
+        this.telegramProperties = telegramProperties;
     }
 
     @SneakyThrows
@@ -56,12 +55,12 @@ public class TelegramService extends TelegramLongPollingBot {
 
     @Override
     public String getBotUsername() {
-        return BOT_USERNAME;
+        return telegramProperties.getBotName();
     }
 
     @Override
     public String getBotToken() {
-        return BOT_TOKEN;
+        return telegramProperties.getBotToken();
     }
 
     @SneakyThrows

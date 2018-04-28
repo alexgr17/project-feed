@@ -11,3 +11,7 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
+
+telegram:
+  botName: FreelanceNotificationsBot
+  botToken: 552373266:AAFR567O55SZs8pco7mk6i6us_YLJasO7IA
