@@ -11,6 +11,7 @@ import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import ru.alexgryaznov.fltelegram.TelegramProperties;
 import ru.alexgryaznov.fltelegram.dao.ChatRepository;
 import ru.alexgryaznov.fltelegram.model.Chat;
+import ru.alexgryaznov.fltelegram.model.Client;
 import ru.alexgryaznov.fltelegram.model.Project;
 
 @Component
@@ -20,6 +21,7 @@ public class TelegramService extends TelegramLongPollingBot {
 
     private static final String ALREADY_SUBSCRIBED_TEXT = "Already subscribed";
     private static final String SUCCESSFULLY_SUBSCRIBED_TEXT = "Successfully subscribed";
+    private static final String CLIENT_ONLINE_TEXT = "Client online: ";
 
     private final ChatRepository chatRepository;
     private final TelegramProperties telegramProperties;
@@ -63,10 +65,17 @@ public class TelegramService extends TelegramLongPollingBot {
         return telegramProperties.getBotToken();
     }
 
-    @SneakyThrows
     public void sendProjectNotification(Project project) {
+        sendNotification(project.getTitle() + LINE_BREAK + project.getDescription() + LINE_BREAK + project.getLink());
+    }
+
+    public void sendClientNotification(Client client) {
+        sendNotification(CLIENT_ONLINE_TEXT + client.getUrl());
+    }
+
+    @SneakyThrows
+    private void sendNotification(String text) {
         for (Chat chat : chatRepository.findAll()) {
-            final String text = project.getTitle() + LINE_BREAK + project.getDescription() + LINE_BREAK + project.getLink();
             execute(new SendMessage(chat.getId(), text));
         }
     }

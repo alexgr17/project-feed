@@ -43,7 +43,7 @@ public class FlTelegramApplication {
 				.apis(RequestHandlerSelectors.basePackage("ru.alexgryaznov.fltelegram"))
 				.paths(any())
 				.build()
-				.apiInfo(new ApiInfo("FL Telegram", "Telegram notifications for new FL projects", "0.0.1-SNAPSHOT",
+				.apiInfo(new ApiInfo("FL Telegram", null, "0.0.1-SNAPSHOT",
 						null, null, null, null, Collections.emptyList()));
 	}
 }

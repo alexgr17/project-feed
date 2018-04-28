@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import ru.alexgryaznov.fltelegram.model.Client;
 import ru.alexgryaznov.fltelegram.model.Project;
 import ru.alexgryaznov.fltelegram.service.TelegramService;
 
@@ -18,8 +19,13 @@ public class TelegramController {
         this.telegramService = telegramService;
     }
 
-    @RequestMapping(value = "/send", method = RequestMethod.POST)
-    public void send(@RequestBody Project project) {
+    @RequestMapping(value = "/send-project", method = RequestMethod.POST)
+    public void sendProject(@RequestBody Project project) {
         telegramService.sendProjectNotification(project);
+    }
+
+    @RequestMapping(value = "/send-client", method = RequestMethod.POST)
+    public void sendClient(@RequestBody Client client) {
+        telegramService.sendClientNotification(client);
     }
 }
