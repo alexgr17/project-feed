@@ -17,10 +17,7 @@ import ru.alexgryaznov.flproject.domain.Project;
 import ru.alexgryaznov.flproject.domain.RssFeed;
 import ru.alexgryaznov.flproject.domain.RssFeedType;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -78,6 +75,7 @@ public class ScheduledTaskService {
                 final List<Project> loadedProjects = projects.stream()
                         .filter(project -> !projectRepository.findById(project.getGuid()).isPresent())
                         .peek(project -> {
+                            //TODO fill this in loadProjects method
                             project.setRssFeed(rssFeed);
                             projectRepository.save(project);
                             project.getCategories().forEach(categoryRepository::save);
@@ -122,15 +120,15 @@ public class ScheduledTaskService {
                 project.setContent(getHtml(doc, PROJECT_TAG_ID_PREFIX + projectId));
                 projectRepository.save(project);
 
+                projectService.processWordsInProjectContent((string, word) -> string, (string, word) -> string, Collections.singletonList(project));
+                sendNotifications(Collections.singletonList(project));
+
                 log.info("Content successfully loaded");
                 Thread.sleep(LOAD_CONTENT_INTERVAL, RANDOM.nextInt(LOAD_CONTENT_INTERVAL));
             } catch (Exception e) {
                 log.error("Error while loading content for project: {}", project.getGuid(), e);
             }
         }
-
-        projectService.processWordsInProjectContent((string, word) -> string, (string, word) -> string, projects);
-        sendNotifications(projects);
 
         log.info("Content successfully loaded - total: {}", projects.size());
     }
